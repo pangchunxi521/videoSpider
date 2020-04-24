@@ -1,0 +1,39 @@
+import requests
+from lxml import etree
+import os
+
+
+url = 'https://ibaotu.com/shipin/7-0-0-0-0-{}.html'
+headers = {
+    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/65.0.3314.0 Safari/537.36 SE 2.X MetaSr 1.0'
+}
+
+patha = 'video/'
+# 爬取前10页
+for i in range(1, 11):
+    urls = url.format(i)
+    pathb = '{}第{}页视频/'.format(patha, i)
+    # 一页创建一个文件夹
+    if not os.path.exists(pathb):
+        os.makedirs(pathb)
+    res = requests.get(urls, headers=headers)
+    res.encoding = res.apparent_encoding
+    if res.status_code == 200:
+        resp = res.text
+    videocON = etree.HTML(resp)
+    video_url = videocON.xpath("//div[contains(@class, 'video-play')]/video/@src")
+    video_name = videocON.xpath("//div[contains(@class, 'show-image')]/img/@alt")
+    print('正在爬取第{}页内容,共{}个视频'.format(i, len(video_url)))
+    for j in range(0, len(video_url)):
+        # 大尺寸视频链接
+        # lista = 'http:' + video_url[j].split("_")[-2]
+        # 小尺寸视频链接
+        lista = 'http:' + video_url[j]
+        name = video_name[j]
+        resa = requests.get(lista)
+        path = '{}{}.mp4'.format(pathb, name)
+        with open(path, 'wb') as vi:
+            print('正在下载第{}个视频--{}.mp4'.format(j+1, name))
+            vi.write(resa.content)
+
+print('爬取完成，视频保存在{}文件夹下'.format(patha))
